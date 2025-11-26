@@ -17,7 +17,8 @@ PASSWORD_WEB = "keunganPermataPermataQQ9007&"
 # ==========================
 # MONGODB ATLAS CONNECTION
 # ==========================
-MONGO_URI = "mongodb+srv://permata_user:permatasukses123%40@cluster0.0aooruh.mongodb.net/permata_keuangan?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URI = "mongodb+srv://permata_user:permatasukses123@cluster0.0aooruh.mongodb.net/permata_keuangan?retryWrites=true&w=majority"
+
 client = MongoClient(MONGO_URI)
 
 db = client["permata_keuangan"]
