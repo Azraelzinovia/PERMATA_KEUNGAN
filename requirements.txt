@@ -1,38 +1,39 @@
-Flask==3.1.2
-Werkzeug==3.1.3
-Jinja2==3.1.6
+Flask==3.1.0
+Werkzeug==3.1.1
+Jinja2==3.1.2
 itsdangerous==2.2.0
+blinker==1.6.3
 click==8.1.7
-blinker==1.9.0
+
+# Database MongoDB
+pymongo==4.6.1
+dnspython==2.6.1
+
+# Image
+Pillow==10.0.1
 
 # Data Processing
-pandas==2.1.4
-numpy==1.26.4
+pandas==2.0.3
+numpy==1.24.4
 python-dateutil==2.9.0.post0
 pytz==2023.3
 tzdata==2023.3
 
 # Grafik
-matplotlib==3.8.2
-cycler==0.12.1
-kiwisolver==1.4.5
+matplotlib==3.7.2
+cycler==0.11.0
+kiwisolver==1.4.4
 contourpy==1.2.0
 pyparsing==3.1.1
 fonttools==4.47.2
 packaging==23.2
 
-# Image Processing
-Pillow==10.2.0
+# Excel
+openpyxl==3.1.2
+et_xmlfile==1.1.0
 
 # PDF
-reportlab==4.0.8
-
-# Excel
-openpyxl==3.1.5
-et_xmlfile==2.0.0
+reportlab==4.1.0
 
 # Server
 gunicorn==21.2.0
-
-# Database MongoDB
-pymongo==4.6.1
