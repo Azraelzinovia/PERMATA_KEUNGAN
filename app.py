@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, send_file
+from flask import Flask, render_template, request, redirect, session, send_file, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
@@ -10,51 +10,50 @@ from reportlab.pdfgen import canvas
 app = Flask(__name__)
 app.secret_key = "permata123"
 
-# PASSWORD MASUK HALAMAN KEUANGAN
+# PASSWORD LOGIN
 PASSWORD_WEB = "keunganPermataPermataQQ9007&"
 
-app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
+# FOLDER UPLOAD KHUSUS RAILWAY
+UPLOAD_FOLDER = "/tmp/uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
-if not os.path.exists("/tmp/uploads"):
-    os.makedirs("/tmp/uploads")
+# Buat folder jika belum ada
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
+# Tempat menyimpan seluruh transaksi
 data_transaksi = []
 
-# Membersihkan titik & koma supaya bisa dihitung
+
+# Membersihkan titik & koma di nominal
 def bersihkan_nominal(nom):
     nom = nom.replace(".", "").replace(",", "")
     return int(nom)
 
-# Membuat grafik pemasukan dan pengeluaran
+
+# Membuat grafik
 def buat_grafik_bulanan(df):
-    plt.figure(figsize=(8,4))
-    df.groupby("jenis")["nominal"].sum().plot(kind="bar", color=["blue","red"])
+    plt.figure(figsize=(8, 4))
+    df.groupby("jenis")["nominal"].sum().plot(kind="bar", color=["blue", "red"])
     plt.title("Rekap Keuangan PERMATA Pengumben")
     plt.ylabel("Jumlah (Rp)")
     plt.tight_layout()
-    plt.savefig("static/grafik.png")
+
+    # Simpan grafik ke /tmp biar kompatibel Railway
+    grafik_path = "/tmp/grafik.png"
+    plt.savefig(grafik_path)
     plt.close()
 
+    return grafik_path
+
+
+# ===================== LOGIN =====================
+
 @app.route("/")
-def index():
-    if "logged_in" not in session:
-        return redirect("/login")
+def home():
+    return redirect("/login")
 
-    df = pd.DataFrame(data_transaksi)
-
-    total_pemasukan = 0
-    total_pengeluaran = 0
-
-    if not df.empty:
-        total_pemasukan = df[df["jenis"]=="Pemasukan"]["nominal"].sum()
-        total_pengeluaran = df[df["jenis"]=="Pengeluaran"]["nominal"].sum()
-        buat_grafik_bulanan(df)
-
-    return render_template("index.html",
-                           data=data_transaksi,
-                           pemasukan=total_pemasukan,
-                           pengeluaran=total_pengeluaran)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -66,10 +65,41 @@ def login():
             return render_template("login.html", error="Password salah")
     return render_template("login.html")
 
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
+
+
+# ===================== DASHBOARD =====================
+
+@app.route("/dashboard")
+def dashboard():
+    if "logged_in" not in session:
+        return redirect("/login")
+
+    df = pd.DataFrame(data_transaksi)
+
+    total_pemasukan = 0
+    total_pengeluaran = 0
+    grafik_url = None
+
+    if not df.empty:
+        total_pemasukan = df[df["jenis"] == "Pemasukan"]["nominal"].sum()
+        total_pengeluaran = df[df["jenis"] == "Pengeluaran"]["nominal"].sum()
+
+        grafik_path = buat_grafik_bulanan(df)
+        grafik_url = "/uploads/" + os.path.basename(grafik_path)
+
+    return render_template("index.html",
+                           data=data_transaksi,
+                           pemasukan=total_pemasukan,
+                           pengeluaran=total_pengeluaran,
+                           grafik=grafik_url)
+
+
+# ===================== TAMBAH TRANSAKSI =====================
 
 @app.route("/tambah", methods=["GET", "POST"])
 def tambah():
@@ -87,7 +117,7 @@ def tambah():
 
         if bukti:
             bukti_name = datetime.now().strftime("%Y%m%d%H%M%S_") + secure_filename(bukti.filename)
-            bukti.save(os.path.join(app.config["UPLOAD_FOLDER"], bukti_name))
+            bukti.save(os.path.join(UPLOAD_FOLDER, bukti_name))
 
         transaksi = {
             "jenis": jenis,
@@ -103,7 +133,9 @@ def tambah():
 
     return render_template("tambah.html")
 
-# FITUR HAPUS TRANSAKSI TETAP ADA
+
+# ===================== HAPUS TRANSAKSI =====================
+
 @app.route("/hapus/<int:index>")
 def hapus(index):
     if "logged_in" not in session:
@@ -111,7 +143,11 @@ def hapus(index):
 
     if 0 <= index < len(data_transaksi):
         data_transaksi.pop(index)
+
     return redirect("/dashboard")
+
+
+# ===================== EXPORT EXCEL =====================
 
 @app.route("/export")
 def export_excel():
@@ -122,17 +158,20 @@ def export_excel():
         return "Tidak ada data."
 
     df = pd.DataFrame(data_transaksi)
-    file_path = "laporan_keuangan.xlsx"
+    file_path = "/tmp/laporan_keuangan.xlsx"
     df.to_excel(file_path, index=False)
 
     return send_file(file_path, as_attachment=True)
+
+
+# ===================== EXPORT PDF =====================
 
 @app.route("/export_pdf")
 def export_pdf():
     if "logged_in" not in session:
         return redirect("/login")
 
-    pdf_path = "laporan_keuangan.pdf"
+    pdf_path = "/tmp/laporan_keuangan.pdf"
     c = canvas.Canvas(pdf_path, pagesize=A4)
 
     c.setFont("Helvetica-Bold", 16)
@@ -141,7 +180,8 @@ def export_pdf():
     y = 760
     for t in data_transaksi:
         c.setFont("Helvetica", 11)
-        c.drawString(50, y, f"{t['waktu']} | {t['jenis']} | Rp {t['nominal']} | {t['keterangan']} | {t['penginput']}")
+        c.drawString(50, y,
+                     f"{t['waktu']} | {t['jenis']} | Rp {t['nominal']} | {t['keterangan']} | {t['penginput']}")
         y -= 20
 
         if y < 50:
@@ -151,34 +191,15 @@ def export_pdf():
     c.save()
     return send_file(pdf_path, as_attachment=True)
 
-@app.route("/")
-def home():
-    return redirect("/login")
+
+# ===================== ROUTE FILE UPLOAD (WAJIB RAILWAY) =====================
+
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory("/tmp", filename)
 
 
-@app.route("/dashboard")
-def dashboard():
-    if "logged_in" not in session:
-        return redirect("/login")
-
-    df = pd.DataFrame(data_transaksi)
-
-    total_pemasukan = 0
-    total_pengeluaran = 0
-
-    if not df.empty:
-        total_pemasukan = df[df["jenis"]=="Pemasukan"]["nominal"].sum()
-        total_pengeluaran = df[df["jenis"]=="Pengeluaran"]["nominal"].sum()
-        buat_grafik_bulanan(df)
-
-    return render_template("index.html",
-                           data=data_transaksi,
-                           pemasukan=total_pemasukan,
-                           pengeluaran=total_pengeluaran)
-app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
-
-if not os.path.exists("/tmp/uploads"):
-    os.makedirs("/tmp/uploads")
+# ===================== RUN (LOCAL ONLY) =====================
 
 if __name__ == "__main__":
     app.run(debug=True)
