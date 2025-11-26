@@ -175,6 +175,10 @@ def dashboard():
                            data=data_transaksi,
                            pemasukan=total_pemasukan,
                            pengeluaran=total_pengeluaran)
+app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
+
+if not os.path.exists("/tmp/uploads"):
+    os.makedirs("/tmp/uploads")
 
 if __name__ == "__main__":
     app.run(debug=True)
