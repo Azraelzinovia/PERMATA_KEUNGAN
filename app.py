@@ -13,26 +13,23 @@ app.secret_key = "permata123"
 # PASSWORD LOGIN
 PASSWORD_WEB = "keunganPermataPermataQQ9007&"
 
-# FOLDER UPLOAD KHUSUS RAILWAY
+# FOLDER UPLOAD RAILWAY
 UPLOAD_FOLDER = "/tmp/uploads"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
-
-# Buat folder jika belum ada
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# Tempat menyimpan seluruh transaksi
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+
+# TEMPAT MENYIMPAN DATA TRANSAKSI
 data_transaksi = []
 
 
-# Membersihkan titik & koma di nominal
 def bersihkan_nominal(nom):
     nom = nom.replace(".", "").replace(",", "")
     return int(nom)
 
 
-# Membuat grafik
 def buat_grafik_bulanan(df):
     plt.figure(figsize=(8, 4))
     df.groupby("jenis")["nominal"].sum().plot(kind="bar", color=["blue", "red"])
@@ -40,15 +37,12 @@ def buat_grafik_bulanan(df):
     plt.ylabel("Jumlah (Rp)")
     plt.tight_layout()
 
-    # Simpan grafik ke /tmp biar kompatibel Railway
     grafik_path = "/tmp/grafik.png"
     plt.savefig(grafik_path)
     plt.close()
 
     return grafik_path
 
-
-# ===================== LOGIN =====================
 
 @app.route("/")
 def home():
@@ -71,8 +65,6 @@ def logout():
     session.clear()
     return redirect("/login")
 
-
-# ===================== DASHBOARD =====================
 
 @app.route("/dashboard")
 def dashboard():
@@ -98,8 +90,6 @@ def dashboard():
                            pengeluaran=total_pengeluaran,
                            grafik=grafik_url)
 
-
-# ===================== TAMBAH TRANSAKSI =====================
 
 @app.route("/tambah", methods=["GET", "POST"])
 def tambah():
@@ -134,8 +124,6 @@ def tambah():
     return render_template("tambah.html")
 
 
-# ===================== HAPUS TRANSAKSI =====================
-
 @app.route("/hapus/<int:index>")
 def hapus(index):
     if "logged_in" not in session:
@@ -146,8 +134,6 @@ def hapus(index):
 
     return redirect("/dashboard")
 
-
-# ===================== EXPORT EXCEL =====================
 
 @app.route("/export")
 def export_excel():
@@ -163,8 +149,6 @@ def export_excel():
 
     return send_file(file_path, as_attachment=True)
 
-
-# ===================== EXPORT PDF =====================
 
 @app.route("/export_pdf")
 def export_pdf():
@@ -192,14 +176,11 @@ def export_pdf():
     return send_file(pdf_path, as_attachment=True)
 
 
-# ===================== ROUTE FILE UPLOAD (WAJIB RAILWAY) =====================
-
+# ROUTE MENAYANGKAN FILE DI /tmp/uploads
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
-    return send_from_directory("/tmp", filename)
+    return send_from_directory("/tmp", filename) if filename == "grafik.png" else send_from_directory("/tmp/uploads", filename)
 
-
-# ===================== RUN (LOCAL ONLY) =====================
 
 if __name__ == "__main__":
     app.run(debug=True)
