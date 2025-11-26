@@ -1,51 +1,56 @@
-from flask import Flask, render_template, request, redirect, session, send_file, send_from_directory
+from flask import Flask, render_template, request, redirect, session, send_file
 from werkzeug.utils import secure_filename
 from pymongo import MongoClient
-from bson.binary import Binary
+from bson.objectid import ObjectId
 from PIL import Image
 from io import BytesIO
-import os
 from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
+import base64
 
 app = Flask(__name__)
 app.secret_key = "permata123"
 
 PASSWORD_WEB = "keunganPermataPermataQQ9007&"
 
-# =============================== #
-# CONNECT MONGODB
-# =============================== #
-MONGO_URI = "URL_MONGODB_ANDA"
+# ==========================
+# MONGODB ATLAS CONNECTION
+# ==========================
+MONGO_URI = "mongodb+srv://permata_user:permatasukses123%40@cluster0.0aooruh.mongodb.net/permata_keuangan?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
+
 db = client["permata_keuangan"]
 transaksi_col = db["transaksi"]
 
-# =============================== #
-# MEMBERSIHKAN NOMINAL
-# =============================== #
+
+# ==========================
+# CLEAN NOMINAL
+# ==========================
 def bersihkan_nominal(nom):
     return int(nom.replace(".", "").replace(",", ""))
 
-# =============================== #
-# RESIZE FOTO
-# =============================== #
+
+# ==========================
+# COMPRESS FOTO
+# ==========================
 def compress_image(image_file):
     img = Image.open(image_file)
-    img.thumbnail((600, 600))  # mengecilkan otomatis
+    img.thumbnail((600, 600))
 
     buffer = BytesIO()
     img.save(buffer, format="JPEG", quality=70)
     buffer.seek(0)
     return buffer
 
-# =============================== #
-# LOGIN
-# =============================== #
+
+# ==========================
+# LOGIN PAGE
+# ==========================
 @app.route("/")
 def home():
     return redirect("/login")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -57,15 +62,16 @@ def login():
             return render_template("login.html", error="Password salah")
     return render_template("login.html")
 
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
 
 
-# =============================== #
-# DASHBOARD
-# =============================== #
+# ==========================
+# DASHBOARD PAGE
+# ==========================
 @app.route("/dashboard")
 def dashboard():
     if "logged_in" not in session:
@@ -73,20 +79,33 @@ def dashboard():
 
     data = list(transaksi_col.find())
 
+    # Hitung pemasukan & pengeluaran
     pemasukan = sum(t["nominal"] for t in data if t["jenis"] == "Pemasukan")
     pengeluaran = sum(t["nominal"] for t in data if t["jenis"] == "Pengeluaran")
 
     return render_template("index.html",
                            data=data,
                            pemasukan=pemasukan,
-                           pengeluaran=pengeluaran,
-                           grafik=None)
+                           pengeluaran=pengeluaran)
+
+
+# ==========================
+# VIEW FOTO
+# ==========================
 @app.route("/foto/<id>")
 def foto(id):
-    t = transaksi_col.find_one({"_id": id})
-    if t and "foto_bukti" in t:
-        return send_file(BytesIO(t["foto_bukti"]), mimetype="image/jpeg")
-    return "Tidak ada foto"
+    try:
+        t = transaksi_col.find_one({"_id": ObjectId(id)})
+        if t and "foto_bukti" in t and t["foto_bukti"] is not None:
+            return send_file(BytesIO(t["foto_bukti"]), mimetype="image/jpeg")
+        return "Foto tidak ditemukan"
+    except:
+        return "Error ID foto"
+
+
+# ==========================
+# TAMBAH TRANSAKSI
+# ==========================
 @app.route("/tambah", methods=["GET", "POST"])
 def tambah():
     if "logged_in" not in session:
@@ -118,3 +137,22 @@ def tambah():
         return redirect("/dashboard")
 
     return render_template("tambah.html")
+
+
+# ==========================
+# HAPUS TRANSAKSI
+# ==========================
+@app.route("/hapus/<id>")
+def hapus(id):
+    if "logged_in" not in session:
+        return redirect("/login")
+
+    transaksi_col.delete_one({"_id": ObjectId(id)})
+    return redirect("/dashboard")
+
+
+# ==========================
+# RUN (LOCAL)
+# ==========================
+if __name__ == "__main__":
+    app.run(debug=True)
