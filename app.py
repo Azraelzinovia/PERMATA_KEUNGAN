@@ -148,9 +148,12 @@ def hapus(id):
     if "logged_in" not in session:
         return redirect("/login")
 
-    transaksi_col.delete_one({"_id": ObjectId(id)})
-    return redirect("/dashboard")
+    try:
+        transaksi_col.delete_one({"_id": ObjectId(id)})
+    except:
+        return "Gagal menghapus data"
 
+    return redirect("/dashboard")
 
 # ==========================
 # RUN (LOCAL)
