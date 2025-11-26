@@ -5,20 +5,86 @@
     <title>Keuangan – PERMATA PENGUMBEN</title>
 
     <style>
-        body { margin: 0; font-family: Arial; background: #f2f4f7; }
-        .header { background: linear-gradient(to right, #0033a0, #ffd100); padding: 25px; text-align: center; color: white; }
-        .logo { width: 90px; }
-        .nav { display: flex; justify-content: center; gap: 20px; background: white; padding: 14px; }
-        .nav a { padding: 10px 16px; background: #0033a0; color: white; text-decoration: none; border-radius: 8px; }
-        .logout-btn { background: red !important; }
-        .export-btn { background: green !important; }
-        .pdf-btn { background: purple !important; }
-        .container { padding: 20px; }
-        .rekap-box { background:white; padding:20px; border-radius:10px; margin-bottom:20px; }
-        .card { background:white; padding:14px; margin-bottom:20px; border-radius:10px; }
-        .hapus-btn { background:red; color:white; padding:7px 12px; border-radius:6px; text-decoration:none; }
-        img.bukti { width: 220px; margin-top: 10px; border-radius: 8px; border:1px solid #ccc; }
-        img.grafik { width: 100%; border-radius: 10px; margin-bottom: 20px; }
+        body { margin: 0; font-family: Arial; background: #eef1f5; }
+
+        .header {
+            background: linear-gradient(to right, #002b7f, #ffd100);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .logo { width: 90px; margin-bottom: 10px; }
+
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            background: white;
+            padding: 16px;
+            border-bottom: 1px solid #d0d0d0;
+        }
+
+        .nav a {
+            padding: 10px 18px;
+            border-radius: 10px;
+            background: #002b7f;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .nav a:hover { opacity: 0.85; }
+
+        .logout-btn { background: #c70000 !important; }
+        .export-btn { background: #0fa000 !important; }
+        .pdf-btn { background: #7b00c7 !important; }
+
+        .container { padding: 25px; max-width: 880px; margin: auto; }
+
+        .rekap-box {
+            background: white;
+            padding: 22px;
+            border-radius: 14px;
+            margin-bottom: 25px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .rekap-box h3 { margin-top: 0; font-size: 20px; }
+
+        .card {
+            background: white;
+            padding: 18px;
+            border-radius: 14px;
+            margin-bottom: 25px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            border-left: 6px solid #002b7f;
+        }
+
+        .hapus-btn {
+            background: #c70000;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        img.bukti {
+            width: 260px;
+            margin-top: 12px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+        }
+
+        img.grafik {
+            width: 100%;
+            border-radius: 14px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
     </style>
 </head>
 <body>
@@ -46,7 +112,7 @@
         <p>Saldo Akhir: <b>Rp {{ "{:,}".format(pemasukan - pengeluaran).replace(",", ".") }}</b></p>
     </div>
 
-    <h3>Grafik Rekap</h3>
+    <h3>Grafik Keuangan</h3>
     {% if grafik %}
         <img src="{{ grafik }}" class="grafik">
     {% else %}
@@ -63,13 +129,12 @@
         <p>Penginput: {{ t.penginput }}</p>
         <p>Waktu: {{ t.waktu }}</p>
 
-       {% if t.foto_bukti %}
-<img src="/foto/{{ t._id }}" class="bukti">
-{% endif %}
-
+        {% if t.foto_bukti %}
+            <img src="/foto/{{ t._id }}" class="bukti">
+        {% endif %}
 
         <br><br>
-<a class="hapus-btn" href="/hapus/{{ t._id }}">Hapus</a>
+        <a class="hapus-btn" href="/hapus/{{ t._id }}">Hapus</a>
     </div>
     {% endfor %}
 
