@@ -5,6 +5,7 @@ from bson.objectid import ObjectId
 from PIL import Image
 from io import BytesIO
 from datetime import datetime
+from bson.objectid import ObjectId
 import pandas as pd
 import matplotlib.pyplot as plt
 import base64
@@ -151,7 +152,7 @@ def hapus(id):
     try:
         transaksi_col.delete_one({"_id": ObjectId(id)})
     except:
-        return "Gagal menghapus data"
+        return "ID tidak valid"
 
     return redirect("/dashboard")
 
