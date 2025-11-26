@@ -1,23 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Login Keuangan</title>
+    <title>Login – PERMATA Keuangan</title>
+
     <style>
-        body { background: #f2f4f7; font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .box { background: white; padding: 30px; width: 320px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); text-align: center; }
-        input { width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; border: 1px solid #bbb; }
-        button { width: 100%; margin-top: 18px; padding: 12px; background: #0033a0; color: white; border: none; border-radius: 8px; }
-        .error { color: red; margin-top: 10px; }
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: linear-gradient(to right, #0033a0, #ffd100);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-box {
+            background: white;
+            width: 330px;
+            padding: 30px 25px;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            text-align: center;
+        }
+
+        .logo {
+            width: 90px;
+            margin-bottom: 12px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #0033a0;
+            margin-top: 10px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #bbb;
+            margin-bottom: 16px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #0033a0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #002b80;
+        }
+
+        .error {
+            color: red;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        .title {
+            font-size: 18px;
+            color: #444;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 18px;
+        }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>Masukkan Password</h2>
+<div class="login-box">
+    <img src="/static/logo_permata.png" class="logo">
+
+    <div class="title">PERMATA PENGUMBEN</div>
+    <div class="subtitle">Divisi Keuangan</div>
+
+    <h2>Masuk Sistem</h2>
 
     <form method="POST">
-        <input type="password" name="password" placeholder="Password">
+        <input type="password" name="password" placeholder="Masukkan password" required>
         <button>Login</button>
     </form>
 
