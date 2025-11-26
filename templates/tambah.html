@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Tambah Transaksi – PERMATA PENGUMBEN</title>
+
+    <style>
+        body { margin: 0; font-family: Arial; background: #f2f4f7; }
+
+        .header {
+            background: linear-gradient(to right, #0033a0, #ffd100);
+            padding: 25px 15px;
+            text-align: center;
+            color: white;
+            border-bottom: 4px solid #002b80;
+        }
+
+        .logo {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        .header-title { margin: 0; font-size: 28px; font-weight: bold; }
+        .header-sub { margin: 0; margin-top: 4px; font-size: 18px; }
+
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            background: white;
+            padding: 14px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .nav a {
+            padding: 10px 16px;
+            background: #0033a0;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .logout-btn { background: red !important; }
+        .export-btn { background: green !important; }
+
+        .container { padding: 20px; }
+
+        label { font-weight: bold; color: #0033a0; }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 16px;
+            border: 1px solid #bbb;
+            border-radius: 8px;
+            font-size: 15px;
+            background: white;
+        }
+
+        textarea { height: 100px; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #0033a0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #002b80;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <img src="/static/logo_permata.png" class="logo">
+    <h1 class="header-title">PERMATA PENGUMBEN</h1>
+    <h2 class="header-sub">DIVISI KEUANGAN</h2>
+</div>
+
+<div class="nav">
+    <a href="/">Dashboard</a>
+    <a href="/tambah">Tambah Transaksi</a>
+    <a class="export-btn" href="/export">Export Excel</a>
+    <a class="logout-btn" href="/logout">Logout</a>
+</div>
+
+<div class="container">
+
+    <h2 style="color:#0033a0; margin-bottom:10px;">Tambah Transaksi</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        <label>Nama Penginput</label>
+        <input type="text" name="penginput" placeholder="contoh: Michael" required>
+
+        <label>Jenis Transaksi</label>
+        <select name="jenis">
+            <option value="Pemasukan">Pemasukan</option>
+            <option value="Pengeluaran">Pengeluaran</option>
+        </select>
+
+        <label>Nominal (boleh pakai titik atau koma)</label>
+        <input type="text" name="nominal" placeholder="contoh: 1.500.000" required>
+
+        <label>Keterangan</label>
+        <textarea name="keterangan" placeholder="contoh: Pembelian snack ibadah" required></textarea>
+
+        <label>Foto Bukti Transaksi</label>
+        <input type="file" name="bukti" accept="image/*" required>
+
+        <button>Submit</button>
+    </form>
+</div>
+
+</body>
+</html>

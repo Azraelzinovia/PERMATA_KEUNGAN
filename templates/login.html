@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Login Keuangan</title>
+    <style>
+        body { background: #f2f4f7; font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .box { background: white; padding: 30px; width: 320px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); text-align: center; }
+        input { width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; border: 1px solid #bbb; }
+        button { width: 100%; margin-top: 18px; padding: 12px; background: #0033a0; color: white; border: none; border-radius: 8px; }
+        .error { color: red; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Masukkan Password</h2>
+
+    <form method="POST">
+        <input type="password" name="password" placeholder="Password">
+        <button>Login</button>
+    </form>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+</div>
+
+</body>
+</html>
