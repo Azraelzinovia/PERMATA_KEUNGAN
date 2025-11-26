@@ -64,8 +64,9 @@
         <p>Waktu: {{ t.waktu }}</p>
 
         {% if t.foto_bukti %}
-            <img src="{{ url_for('uploaded_file', filename=t.foto_bukti) }}" class="bukti">
-        {% endif %}
+    <img src="/foto/{{ t._id }}" class="bukti">
+{% endif %}
+
 
         <br><br>
         <a class="hapus-btn" href="/hapus/{{ loop.index0 }}">Hapus</a>
