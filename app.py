@@ -13,11 +13,11 @@ app.secret_key = "permata123"
 # PASSWORD MASUK HALAMAN KEUANGAN
 PASSWORD_WEB = "keunganPermataPermataQQ9007&"
 
-app.config["UPLOAD_FOLDER"] = "static/uploads"
+app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
-if not os.path.exists("static/uploads"):
-    os.makedirs("static/uploads")
+if not os.path.exists("/tmp/uploads"):
+    os.makedirs("/tmp/uploads")
 
 data_transaksi = []
 
