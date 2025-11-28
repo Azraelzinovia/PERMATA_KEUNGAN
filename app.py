@@ -1,112 +1,131 @@
 from flask import Flask, render_template, request, redirect, session, send_file
 from werkzeug.utils import secure_filename
 from pymongo import MongoClient
-from bson import ObjectId
+from bson.objectid import ObjectId
 from PIL import Image
 from io import BytesIO
+from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from datetime import datetime
+import os
 
 app = Flask(__name__)
 app.secret_key = "permata123"
 
 PASSWORD_WEB = "keunganPermataPermataQQ9007&"
 
-# MongoDB
-MONGO_URI = "mongodb+srv://permata_user:permatasukses123@cluster0.0aooruh.mongodb.net/?appName=Cluster0"
+# ===============================
+# MONGODB CONNECTION
+# ===============================
+MONGO_URI = "mongodb+srv://permata_user:permatasukses123@cluster0.0aooruh.mongodb.net/?retryWrites=true&w=majority"
 client = MongoClient(MONGO_URI)
 db = client["permata_keuangan"]
-trans_col = db["transaksi"]
+transaksi_col = db["transaksi"]
 
-# ---------------------------
-# Resize foto
-# ---------------------------
-def resize_image(file):
-    img = Image.open(file)
+
+# ===============================
+# CLEAN NOMINAL
+# ===============================
+def bersihkan_nominal(nom):
+    return int(nom.replace(".", "").replace(",", ""))
+
+
+# ===============================
+# COMPRESS IMAGE
+# ===============================
+def compress_image(image_file):
+    img = Image.open(image_file)
     img.thumbnail((600, 600))
+
     buffer = BytesIO()
     img.save(buffer, format="JPEG", quality=70)
     buffer.seek(0)
-    return buffer.read()
+    return buffer
 
-# ---------------------------
-# Bersihkan nominal
-# ---------------------------
-def bersihkan_nominal(x):
-    return int(x.replace(".", "").replace(",", ""))
 
-# ---------------------------
-# LOGIN
-# ---------------------------
-@app.route("/", methods=["GET", "POST"])
+# ===============================
+# LOGIN SYSTEM
+# ===============================
+@app.route("/")
+def home():
+    return redirect("/login")
+
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         if request.form["password"] == PASSWORD_WEB:
-            session["login"] = True
+            session["logged_in"] = True
             return redirect("/dashboard")
         return render_template("login.html", error="Password salah")
     return render_template("login.html")
 
+
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect("/")
+    return redirect("/login")
 
-# ---------------------------
+
+# ===============================
 # DASHBOARD
-# ---------------------------
+# ===============================
 @app.route("/dashboard")
 def dashboard():
-    if "login" not in session:
-        return redirect("/")
+    if "logged_in" not in session:
+        return redirect("/login")
 
-    data = list(trans_col.find())
+    data = list(transaksi_col.find())
 
     pemasukan = sum(t["nominal"] for t in data if t["jenis"] == "Pemasukan")
     pengeluaran = sum(t["nominal"] for t in data if t["jenis"] == "Pengeluaran")
+
+    # Grafik sementara dimatikan supaya tidak error
+    grafik = None
 
     return render_template("index.html",
                            data=data,
                            pemasukan=pemasukan,
                            pengeluaran=pengeluaran,
-                           grafik=None)
+                           grafik=grafik)
 
-# ---------------------------
-# Ambil Foto dari Mongo (FIX)
-# ---------------------------
+
+# ===============================
+# SHOW FOTO BUKTI
+# ===============================
 @app.route("/foto/<id>")
 def foto(id):
-    from bson.objectid import ObjectId
     t = transaksi_col.find_one({"_id": ObjectId(id)})
-    if t and "foto_bukti" in t:
+    if t and t.get("foto_bukti"):
         return send_file(BytesIO(t["foto_bukti"]), mimetype="image/jpeg")
-    return "Tidak ada foto"
+    return "Foto tidak ditemukan"
 
-# ---------------------------
+
+# ===============================
 # TAMBAH TRANSAKSI
-# ---------------------------
+# ===============================
 @app.route("/tambah", methods=["GET", "POST"])
 def tambah():
-    if "login" not in session:
-        return redirect("/")
+    if "logged_in" not in session:
+        return redirect("/login")
 
     if request.method == "POST":
         jenis = request.form["jenis"]
         nominal = bersihkan_nominal(request.form["nominal"])
-        ket = request.form["keterangan"]
+        keterangan = request.form["keterangan"]
         penginput = request.form["penginput"]
         waktu = datetime.now().strftime("%d-%m-%Y %H:%M")
 
         foto = request.files["bukti"]
-        foto_data = resize_image(foto) if foto else None
+        foto_data = None
 
-        trans_col.insert_one({
+        if foto:
+            foto_data = compress_image(foto).read()
+
+        transaksi_col.insert_one({
             "jenis": jenis,
             "nominal": nominal,
-            "keterangan": ket,
+            "keterangan": keterangan,
             "penginput": penginput,
             "waktu": waktu,
             "foto_bukti": foto_data
@@ -116,57 +135,60 @@ def tambah():
 
     return render_template("tambah.html")
 
-# ---------------------------
-# EXPORT EXCEL (FIX)
-# ---------------------------
+
+# ===============================
+# EXPORT EXCEL
+# ===============================
 @app.route("/export")
 def export_excel():
     if "logged_in" not in session:
         return redirect("/login")
 
-    if transaksi_col.count_documents({}) == 0:
-        return "Tidak ada data."
-
-    data = list(transaksi_col.find({}, {"foto_bukti": 0}))  # foto jangan ikut ke excel
+    data = list(transaksi_col.find())
+    if not data:
+        return "Tidak ada data"
 
     df = pd.DataFrame(data)
-    df.drop("_id", axis=1, inplace=True)
+    df.drop(columns=["foto_bukti"], inplace=True)
 
-    # Simpan ke /tmp
     file_path = "/tmp/laporan_keuangan.xlsx"
     df.to_excel(file_path, index=False)
 
     return send_file(file_path, as_attachment=True)
 
-# ---------------------------
-# EXPORT PDF (FIX)
-# ---------------------------
+
+# ===============================
+# EXPORT PDF
+# ===============================
 @app.route("/export_pdf")
 def export_pdf():
     if "logged_in" not in session:
         return redirect("/login")
 
-    pdf_path = "/tmp/laporan_keuangan.pdf"
-    c = canvas.Canvas(pdf_path, pagesize=A4)
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
 
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, 800, "Laporan Keuangan PERMATA Pengumben")
+    file_path = "/tmp/laporan_keuangan.pdf"
+    c = canvas.Canvas(file_path, pagesize=A4)
 
-    y = 760
-    for t in transaksi_col.find({}, {"foto_bukti": 0}):
-        c.setFont("Helvetica", 11)
-        c.drawString(50, y,
-            f"{t['waktu']} | {t['jenis']} | Rp {t['nominal']} | {t['keterangan']} | {t['penginput']}"
-        )
+    y = 800
+    c.setFont("Helvetica-Bold", 15)
+    c.drawString(50, y, "Laporan Keuangan PERMATA Pengumben")
+    y -= 30
+
+    data = list(transaksi_col.find())
+    c.setFont("Helvetica", 10)
+
+    for t in data:
+        c.drawString(50, y, f"{t['waktu']} | {t['jenis']} | Rp {t['nominal']} | {t['penginput']} | {t['keterangan']}")
         y -= 20
-
-        if y < 50:
+        if y < 40:
             c.showPage()
             y = 800
 
     c.save()
-    return send_file(pdf_path, as_attachment=True)
+    return send_file(file_path, as_attachment=True)
 
-# ---------------------------
+
 if __name__ == "__main__":
     app.run(debug=True)
