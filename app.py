@@ -79,8 +79,9 @@ def dashboard():
 # ---------------------------
 @app.route("/foto/<id>")
 def foto(id):
-    t = trans_col.find_one({"_id": ObjectId(id)})
-    if t and t.get("foto_bukti"):
+    from bson.objectid import ObjectId
+    t = transaksi_col.find_one({"_id": ObjectId(id)})
+    if t and "foto_bukti" in t:
         return send_file(BytesIO(t["foto_bukti"]), mimetype="image/jpeg")
     return "Tidak ada foto"
 
@@ -119,45 +120,44 @@ def tambah():
 # EXPORT EXCEL (FIX)
 # ---------------------------
 @app.route("/export")
-def export():
-    if "login" not in session:
-        return redirect("/")
+def export_excel():
+    if "logged_in" not in session:
+        return redirect("/login")
 
-    data = list(trans_col.find())
+    if transaksi_col.count_documents({}) == 0:
+        return "Tidak ada data."
 
-    if not data:
-        return "Tidak ada data"
-
-    for d in data:
-        d["_id"] = str(d["_id"])
+    data = list(transaksi_col.find({}, {"foto_bukti": 0}))  # foto jangan ikut ke excel
 
     df = pd.DataFrame(data)
-    path = "/tmp/laporan.xlsx"
-    df.to_excel(path, index=False)
+    df.drop("_id", axis=1, inplace=True)
 
-    return send_file(path, as_attachment=True)
+    # Simpan ke /tmp
+    file_path = "/tmp/laporan_keuangan.xlsx"
+    df.to_excel(file_path, index=False)
+
+    return send_file(file_path, as_attachment=True)
 
 # ---------------------------
 # EXPORT PDF (FIX)
 # ---------------------------
 @app.route("/export_pdf")
 def export_pdf():
-    if "login" not in session:
-        return redirect("/")
+    if "logged_in" not in session:
+        return redirect("/login")
 
-    data = list(trans_col.find())
-
-    pdf_path = "/tmp/laporan.pdf"
+    pdf_path = "/tmp/laporan_keuangan.pdf"
     c = canvas.Canvas(pdf_path, pagesize=A4)
 
     c.setFont("Helvetica-Bold", 16)
     c.drawString(50, 800, "Laporan Keuangan PERMATA Pengumben")
 
-    y = 770
-    for t in data:
-        text = f"{t['waktu']} | {t['jenis']} | Rp {t['nominal']} | {t['keterangan']} | {t['penginput']}"
-        c.setFont("Helvetica", 10)
-        c.drawString(50, y, text)
+    y = 760
+    for t in transaksi_col.find({}, {"foto_bukti": 0}):
+        c.setFont("Helvetica", 11)
+        c.drawString(50, y,
+            f"{t['waktu']} | {t['jenis']} | Rp {t['nominal']} | {t['keterangan']} | {t['penginput']}"
+        )
         y -= 20
 
         if y < 50:
